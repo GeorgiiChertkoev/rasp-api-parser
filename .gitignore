@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+.vscode/
+build/
+plan
+ex_with_transfer.json
+TODO
