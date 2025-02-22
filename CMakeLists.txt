@@ -19,6 +19,10 @@ FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download
                         #   GIT_TAG v3.11.3)
 FetchContent_MakeAvailable(json)
 
-add_executable(${PROJECT_NAME} main.cpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE cpr::cpr)
-target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
+
+# add_library(segments segment.h segment.cpp)
+# target_link_libraries(segments PRIVATE nlohmann_json::nlohmann_json)
+# target_link_libraries(${PROJECT_NAME} PRIVATE segments)
+
+add_subdirectory(lib)
+add_subdirectory(bin)
