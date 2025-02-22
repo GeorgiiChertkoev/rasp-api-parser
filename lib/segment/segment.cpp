@@ -140,20 +140,52 @@ std::ostream& operator<<(std::ostream& stream, const TransportType& t) {
     return stream;
 }
 
-void to_json(json& j, const Thread& thread) {
+json ThreadToJson(const Thread& thread) {
+    json j;
     j["duration"] = thread.duration;
     if (thread.is_transfer) {
+        j["is_transfer"] = true;
         j["transfer_from"] = {"title", thread.from};
         j["transfer_to"] = {"title", thread.from};
-
+        return j;
     }
+    j["departure"] = thread.departure;
+    j["arrival"] = thread.arrival;
+    j["to"] = {"title", thread.to};
+    j["from"] = {"title", thread.from};
+    j["thread"] = {
+        {"title", thread.title},
+        {"transport_type", thread.transport_types[0]}
+    };
+    return j;
+}
+
+void to_json(json& j, const Thread& thread) {
+    // j = ThreadToJson(thread);
+    j["duration"] = thread.duration;
+    if (thread.is_transfer) {
+        j["is_transfer"] = true;
+        j["transfer_from"] = {"title", thread.from};
+        j["transfer_to"] = {"title", thread.from};
+        return;
+    }
+    j["departure"] = thread.departure;
+    j["arrival"] = thread.arrival;
+    j["to"] = {"title", thread.to};
+    j["from"] = {"title", thread.from};
+    j["thread"] = {
+        {"title", thread.title},
+        {"transport_type", thread.transport_types[0]}
+    };
 }
 
 void to_json(json& j, const Segment& segment) {
     // DO THIS
     if (segment.details.size() > 0) {
         j["has_transfers"] = true;
-        
+        for (const Thread& t : segment.details) {
+            j["details"].push_back(t);
+        }
     }
     // to_json(j, )
 }
