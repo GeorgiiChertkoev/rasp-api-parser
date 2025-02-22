@@ -24,7 +24,7 @@ std::ostream& operator<<(std::ostream& stream, const TransportType& t);
 struct Thread {
     bool is_transfer;
     std::string title;
-    std::vector<TransportType> transport_types;
+    TransportType transport_type;
     std::string from;
     std::string to;
     uint64_t duration;
@@ -37,9 +37,11 @@ struct Segment : public Thread {
     std::vector<Thread> details;
 };
 
-void from_json(const json& j, Segment& segment);
-void to_json(json& j, const Segment& segment);
-void from_json(const json& j, Thread& thread);
 void from_json(const json& j, TransportType& transport_type);
+void from_json(const json& j, Segment& segment);
+void from_json(const json& j, Thread& thread);
+void to_json(json& j, const TransportType& transport_type);
+void to_json(json& j, const Segment& segment);
+void to_json(json& j, const Thread& thread);
 
 

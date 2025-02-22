@@ -14,7 +14,8 @@ inline cpr::Response GetYandexRasp(std::string from, std::string to, std::string
     return cpr::Get(cpr::Url{"https://api.rasp.yandex.net/v3.0/search/"}, 
                     cpr::Parameters({{"apikey", kApiKey}, {"format", "json"}, 
                         {"lang", "ru_RU"}, {"transfers", "true"},
-                        {"from", from}, {"to", to}, {"date", date}}));
+                        {"from", from}, {"to", to}, 
+                        {"date", date}}));
 }
 
 void PrintResponse(cpr::Response r) {
@@ -42,7 +43,15 @@ int main() {
         
     // to_json(j, {});
     // std::cout << j << '\n';
+
+
     RaspResponse r = j.get<RaspResponse>();
+    std::ofstream back("backwards.json");
+    json out = r;
+    std::cout << "will write\n";
+    back << out << std::endl;
+    std::cout << "wrote\n";
+    RaspResponse other = out.get<RaspResponse>();
     std::cout << r.segments.size() << '\n';
     std::cout << r.search_from << '\n';
     // for (const json& s : data.at("segments")) {
@@ -53,7 +62,7 @@ int main() {
         std::cout << 1 << '\n';
         // Segment data = s.get<Segment>();
         std::cout << "123\n";
-        std::cout << data.title << " on " << data.transport_types[0] << '\n';
+        std::cout << data.title << " on " << data.transport_type << '\n';
         std::cout << "123\n";
         if (data.details.size() != 0) {
             for (const Thread& thread : data.details) {
