@@ -8,6 +8,7 @@
 #include "nlohmann/json.hpp"
 using json = nlohmann::json;
 
+const char* kDatetimeFormat = "%Y-%m-%dT%H:%M:%S±hh:mm";
 
 enum class TransportType {
     kPlane,
@@ -28,8 +29,8 @@ struct Thread {
     std::string from;
     std::string to;
     uint64_t duration;
-    std::string departure;
-    std::string arrival;
+    time_t departure;
+    time_t arrival;
 };
 
 struct Segment : public Thread {

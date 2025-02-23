@@ -2,6 +2,17 @@
 
 
 
+time_t ParseTime(const json& j) {
+    if (j.is_number_integer()) {
+        return j.get<time_t>();
+    }
+    std::istringstream ss(j.get<std::string>());
+    std::tm tm = {};
+    ss >> std::get_time(&tm, kDatetimeFormat);
+    return mktime(&tm);
+}
+
+
 Segment ParseThread(const json& j) {
     Segment thread;
     // thread.transport_types.push_back(j.at("thread").at("transport_type").get<TransportType>());
@@ -14,8 +25,10 @@ Segment ParseThread(const json& j) {
         j.at("thread").at("title").get_to(thread.title);
         j.at("from").at("title").get_to(thread.from);
         j.at("to").at("title").get_to(thread.to);
-        j.at("departure").get_to(thread.departure);
-        j.at("arrival").get_to(thread.arrival);
+        thread.departure = ParseTime(j.at("departure"));
+        thread.arrival = ParseTime(j.at("arrival"));
+        // j.at("departure").get_to(thread.departure);
+        // j.at("arrival").get_to(thread.arrival);
         j.at("thread").at("transport_type").get_to(thread.transport_type);
     }
 
@@ -72,15 +85,17 @@ void from_json(const json& j, TransportType& transport_type) {
 void from_json(const json& j, Segment& segment) {
     // на одном уровне с segment : {}
     // if (j.contains("departure") && j.contains("arrival")) {
-    j.at("departure").get_to(segment.departure);
-    j.at("arrival").get_to(segment.arrival);
-    // }
+        // }
+    // j.at("departure").get_to(segment.departure);
+    // j.at("arrival").get_to(segment.arrival);
+    segment.departure = ParseTime(j.at("departure"));
+    segment.arrival = ParseTime(j.at("arrival"));
     if (j.contains("has_transfers")) {
         if (j.at("has_transfers").get<bool>()) {
-            std::cerr << "parsing with transfer\n";
+            // std::cerr << "parsing with transfer\n";
             ParseWithTransfers(j, segment);
         } else {
-            std::cerr << "parsing without transfer\n";
+            // std::cerr << "parsing without transfer\n";
             segment = ParseThread(j);
             // from_json(j, reinterpret_cast<Thread>(segment));
         }

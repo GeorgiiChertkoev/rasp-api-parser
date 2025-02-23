@@ -5,6 +5,7 @@ void from_json(const json& j, RaspResponse& r) {
     j.at("search").at("from").at("title").get_to(r.search_from);
     j.at("search").at("to").at("title").get_to(r.search_to);
     j.at("search").at("date").get_to(r.search_date);
+    r.response_date = j.value("response_date", 0);
     // when to write response date
     r.segments.resize(j.at("segments").size());
     int i = 0;
@@ -28,6 +29,7 @@ void to_json(json& j, const RaspResponse& r) {
     j["search"]["from"]["title"] = r.search_from; 
     j["search"]["to"]["title"] = r.search_to;
     j["search"]["date"] = r.search_date; 
+    j["response_date"] = r.response_date;
     int i = 0;
     for (const Segment& s : r.segments) {
         j["segments"].push_back(s);
