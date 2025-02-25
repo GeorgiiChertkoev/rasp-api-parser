@@ -75,7 +75,6 @@ void from_json(const json& j, TransportType& transport_type) {
 
 
 void from_json(const json& j, Segment& segment) {
-    // на одном уровне с segment : {}
     j.at("departure").get_to(segment.departure);
     j.at("arrival").get_to(segment.arrival);
     if (j.value("has_transfers", false)) {
@@ -174,7 +173,6 @@ std::ostream& operator<<(std::ostream& stream, const TimeWithTimezone& t) {
 
 
 void to_json(json& j, const Thread& thread) {
-    // j = ThreadToJson(thread);
     j["duration"] = thread.duration;
     if (thread.is_transfer) {
         j["is_transfer"] = true;
@@ -218,7 +216,6 @@ std::ostream& operator<<(std::ostream& stream, const Thread& thread) {
         stream << '"' << thread.from << '"' << " -> " << '"' <<  thread.to << '"';
         return stream;
     }
-    // stream << thread.title << " (" << thread.transport_type << ")" << '\n';
     stream << thread.transport_type << ": " << thread.title  << '\n';
     stream << '"' << thread.from << '"' << " -> " << '"' <<  thread.to << '"' << '\n';
     stream << "Отправление: " << thread.departure << '\n';
@@ -239,8 +236,8 @@ std::ostream& PrettyPrint(std::ostream& stream, const Thread& thread,
     }
     stream << indent << thread.transport_type << ": " << thread.title  << '\n';
     stream << indent << "   " << '"' << thread.from << '"' << " -> " << '"' <<  thread.to << '"' << '\n';
-    stream << indent << "   " << "Отправление в " << thread.departure << '\n';
-    stream << indent << "   " << "Прибытие в " << thread.arrival;
+    stream << indent << "   " << "Отправление: " << thread.departure << '\n';
+    stream << indent << "   " << "Прибытие:    " << thread.arrival;
     return stream;
 }
 
@@ -252,12 +249,10 @@ std::ostream& operator<<(std::ostream& stream, const Segment& segment) {
 
     stream << segment.title << '\n';
     for (size_t i = 0; i < segment.details.size(); i++) {
-    // for (const Thread& t : segment.details) {
         PrettyPrint(stream, segment.details[i], 1);
         if (i != segment.details.size() - 1) {
             stream << '\n';
         }
-
     }
 
     return stream;

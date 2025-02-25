@@ -25,8 +25,6 @@ public:
     RaspRequester(const char* api_key, time_t cache_lifetime = 12 * 3600) : 
         api_key(api_key),
         cache_lifetime(cache_lifetime) {}
-    RaspRequester(time_t cache_lifetime = 12 * 3600) : 
-        cache_lifetime(cache_lifetime) {}
 
     std::expected<RaspResponse, ErrorType> Get(std::string from, std::string to, 
         std::string date, std::ostream& err_stream = std::cerr);
