@@ -12,10 +12,8 @@ time_t ParseTime(const json& j) {
     return mktime(&tm);
 }
 
-
 Segment ParseThread(const json& j) {
     Segment thread;
-    // thread.transport_types.push_back(j.at("thread").at("transport_type").get<TransportType>());
     if (j.contains("transfer_from") && j.contains("transfer_to")) {
         thread.is_transfer = true;
         j.at("transfer_from").at("title").get_to(thread.from);
@@ -25,10 +23,8 @@ Segment ParseThread(const json& j) {
         j.at("thread").at("title").get_to(thread.title);
         j.at("from").at("title").get_to(thread.from);
         j.at("to").at("title").get_to(thread.to);
-        thread.departure = ParseTime(j.at("departure"));
-        thread.arrival = ParseTime(j.at("arrival"));
-        // j.at("departure").get_to(thread.departure);
-        // j.at("arrival").get_to(thread.arrival);
+        j.at("departure").get_to(thread.departure);
+        j.at("arrival").get_to(thread.arrival);
         j.at("thread").at("transport_type").get_to(thread.transport_type);
     }
 
@@ -36,15 +32,11 @@ Segment ParseThread(const json& j) {
     return thread;
 }
 
-
-
 void from_json(const json& j, Thread& thread) {
     thread = ParseThread(j);
 }
 
-
 void ParseWithTransfers(const json& j, Segment& segment) {
-    // segment.is_transfer = false;
     j.at("departure_from").at("title").get_to(segment.from);
     j.at("arrival_to").at("title").get_to(segment.to);
     j.at("transfers").at(0).at("title").get_to(segment.transfer_point);
@@ -53,8 +45,8 @@ void ParseWithTransfers(const json& j, Segment& segment) {
                     + segment.to;
     for (const json& d : j.at("details")) {
         segment.details.push_back(ParseThread(d));
+        segment.duration += segment.details.back().duration;
     }
-    // j.at("duration").get_to(segment.duration);
 }
 
 
@@ -84,23 +76,12 @@ void from_json(const json& j, TransportType& transport_type) {
 
 void from_json(const json& j, Segment& segment) {
     // на одном уровне с segment : {}
-    // if (j.contains("departure") && j.contains("arrival")) {
-        // }
-    // j.at("departure").get_to(segment.departure);
-    // j.at("arrival").get_to(segment.arrival);
-    segment.departure = ParseTime(j.at("departure"));
-    segment.arrival = ParseTime(j.at("arrival"));
-    if (j.contains("has_transfers")) {
-        if (j.at("has_transfers").get<bool>()) {
-            // std::cerr << "parsing with transfer\n";
-            ParseWithTransfers(j, segment);
-        } else {
-            // std::cerr << "parsing without transfer\n";
-            segment = ParseThread(j);
-            // from_json(j, reinterpret_cast<Thread>(segment));
-        }
+    j.at("departure").get_to(segment.departure);
+    j.at("arrival").get_to(segment.arrival);
+    if (j.value("has_transfers", false)) {
+        ParseWithTransfers(j, segment);
     } else {
-        std::cerr << "WHAT IS THAT\n";
+        segment = ParseThread(j);
     }
 }
 
@@ -136,6 +117,61 @@ void to_json(json& j, const TransportType& transport_type) {
     j = static_cast<int>(transport_type);
 }
 
+void from_json(const json& j, TimeWithTimezone& time) {
+    std::string s = j.get<std::string>();
+    std::istringstream ss(s);
+    std::tm tm = {};
+    ss >> std::get_time(&tm, kDatetimeFormat);
+    time.timestamp = mktime(&tm);
+    time.zone_in_mins = 60 * std::stoi(s.substr(20, 2));
+    time.zone_in_mins += std::stoi(s.substr(23, 2));
+    if (s[19] == '-') {
+        time.zone_in_mins *= -1;
+    }
+    
+}
+
+
+void to_json(json& j, const TimeWithTimezone& time) {
+    std::string res = "";
+    std::tm* tm_ptr = std::localtime(&time.timestamp);
+    char buffer[30];
+    std::strftime(buffer, sizeof(buffer), kDatetimeFormat, tm_ptr);
+    buffer[19] = '\0';
+    time_t temp = time.zone_in_mins;
+    if (time.zone_in_mins < 0) {
+        res += '-';
+        temp *= -1;
+    } else {
+        res += '+';
+    }
+    if (temp / 60 < 10) {
+        res += '0';
+    }
+    res += std::to_string(temp / 60);
+    res += ':';
+    if (temp % 60 < 10) {
+        res += '0';
+    }
+    res += std::to_string(temp % 60);
+    j = std::string(buffer) + res;
+}
+
+
+std::ostream& operator<<(std::ostream& stream, const TimeWithTimezone& t) {
+    std::tm* tm_ptr = std::localtime(&t.timestamp);
+    char buffer[30];
+    std::strftime(buffer, sizeof(buffer), kPrettyDatetimeFormat, tm_ptr);
+    stream << buffer << " (";
+    if (t.zone_in_mins < 0) {
+        stream << '-';
+    } else {
+        stream << '+';
+    }
+    stream << t.zone_in_mins / 60 << ":" << t.zone_in_mins % 60 << ')';
+    return stream;
+}
+
 
 void to_json(json& j, const Thread& thread) {
     // j = ThreadToJson(thread);
@@ -157,7 +193,6 @@ void to_json(json& j, const Thread& thread) {
 }
 
 void to_json(json& j, const Segment& segment) {
-    // DO THIS
     if (segment.details.size() > 0) {
         j["has_transfers"] = true;
         j["departure_from"]["title"] = segment.from;
@@ -175,3 +210,58 @@ void to_json(json& j, const Segment& segment) {
         j["has_transfers"] = false;
     }
 }
+
+
+std::ostream& operator<<(std::ostream& stream, const Thread& thread) {
+    if (thread.is_transfer) {
+        stream << "пересадка: ";
+        stream << '"' << thread.from << '"' << " -> " << '"' <<  thread.to << '"';
+        return stream;
+    }
+    // stream << thread.title << " (" << thread.transport_type << ")" << '\n';
+    stream << thread.transport_type << ": " << thread.title  << '\n';
+    stream << '"' << thread.from << '"' << " -> " << '"' <<  thread.to << '"' << '\n';
+    stream << "Отправление: " << thread.departure << '\n';
+    stream << "Прибытие:    " << thread.arrival;
+    return stream;
+}
+
+std::ostream& PrettyPrint(std::ostream& stream, const Thread& thread,
+                          int indentation_level = 0) {
+    std::string indent(indentation_level * 3, ' ');
+    if (thread.is_transfer) {
+        stream << indent << "пересадка: ";
+        stream << '"' << thread.from << '"' << " -> " << '"' <<  thread.to << '"';
+        return stream;
+    }
+    if (indentation_level == 0) {
+        stream << "прямой ";
+    }
+    stream << indent << thread.transport_type << ": " << thread.title  << '\n';
+    stream << indent << "   " << '"' << thread.from << '"' << " -> " << '"' <<  thread.to << '"' << '\n';
+    stream << indent << "   " << "Отправление в " << thread.departure << '\n';
+    stream << indent << "   " << "Прибытие в " << thread.arrival;
+    return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const Segment& segment) {
+    if (segment.details.size() == 0) {
+        PrettyPrint(stream, segment);
+        return stream;
+    }
+
+    stream << segment.title << '\n';
+    for (size_t i = 0; i < segment.details.size(); i++) {
+    // for (const Thread& t : segment.details) {
+        PrettyPrint(stream, segment.details[i], 1);
+        if (i != segment.details.size() - 1) {
+            stream << '\n';
+        }
+
+    }
+
+    return stream;
+}
+
+
+

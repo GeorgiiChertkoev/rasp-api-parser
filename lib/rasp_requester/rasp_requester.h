@@ -7,25 +7,32 @@
 #include "lib/rasp_response/rasp_response.h"
 
 
-// CreateCacheDir();
-
 enum class ErrorType {
     kNoError,
-    kBadRequest
+    kJsonError,
+    kFileSystemError,
+    kUnkownError,
+    kBadRequest = 400,
+    kPageNotFound = 404,
+    kUnknownRequestError
 };
 
 class RaspRequester {
-public: 
-    static const time_t kCacheInvalidationPeriod = 12 * 3600;
+public:
+    time_t cache_lifetime;
+    const char* api_key;
 
-    std::expected<RaspResponse, ErrorType> Get(std::string from, std::string to, std::string date);
+    RaspRequester(const char* api_key, time_t cache_lifetime = 12 * 3600) : 
+        api_key(api_key),
+        cache_lifetime(cache_lifetime) {}
+    RaspRequester(time_t cache_lifetime = 12 * 3600) : 
+        cache_lifetime(cache_lifetime) {}
+
+    std::expected<RaspResponse, ErrorType> Get(std::string from, std::string to, 
+        std::string date, std::ostream& err_stream = std::cerr);
 
 private:
-    const char* kApiKey = "7ca52401-0466-4ad4-9a20-afe69440ac7a";
-
-
     inline cpr::Response GetYandexRasp(std::string from, std::string to, std::string date);
     std::optional<RaspResponse> GetFromCache(std::string filename);
     void WriteCache(const RaspResponse& rasp, std::string filename);
-    
 };
