@@ -4,8 +4,16 @@
 
 #include "lib/rasp_requester/rasp_requester.h"
 
+std::string GetApiKey() {
+    std::ifstream config("../config.json");
+    if (!config.is_open()) {
+        return "";
+    }
+    return json::parse(config).value("apikey", "");
+}
+
 void GetAndPrint(const std::string& date, const std::string& from, const std::string& to) {
-    RaspRequester requester("7ca52401-0466-4ad4-9a20-afe69440ac7a");
+    RaspRequester requester(GetApiKey().c_str());
     std::expected<RaspResponse, ErrorType> r = requester.Get(from, to, date);
     if (!r.has_value()) {
         std::cerr << "error happened\n";
